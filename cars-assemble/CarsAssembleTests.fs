@@ -7,6 +7,11 @@ open Exercism.Tests
 open CarsAssemble
 
 [<Fact>]
+let ``ProductionRate Per Hour in speed 6 should be 1193.4`` () =
+    productionRatePerHour 6 |> should equal 1193.4
+
+
+[<Fact>]
 [<Task(1)>]
 let ``Success rate for speed 10``() = successRate 10 |> should (equalWithin 0.01) 0.77
 
