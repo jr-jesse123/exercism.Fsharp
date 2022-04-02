@@ -35,4 +35,3 @@ let workingItemsPerMinute (speed: int): int =
 
 
 
-productionRatePerHour 10
