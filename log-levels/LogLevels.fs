@@ -34,11 +34,5 @@ let logLevel(logLine: string): string =
     
 let reformat(logLine: string): string = 
     let level , message = ``get level and message`` logLine
-    String.concat "" [
-        
-        String.trim message
-        " "
-        "("
-        treatLogLevel level 
-        ")"
-    ]
+    sprintf "%s (%s)" (String.trim message) (treatLogLevel level)
+    
