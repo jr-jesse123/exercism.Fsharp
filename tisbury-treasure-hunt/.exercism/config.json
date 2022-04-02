@@ -1,0 +1,21 @@
+{
+  "authors": [
+    "Grenkin1988"
+  ],
+  "files": {
+    "solution": [
+      "TisburyTreasureHunt.fs"
+    ],
+    "test": [
+      "TisburyTreasureHuntTests.fs"
+    ],
+    "exemplar": [
+      ".meta/Exemplar.fs"
+    ]
+  },
+  "forked_from": [
+    "python/tisbury-treasure-hunt"
+  ],
+  "icon": "proverb",
+  "blurb": "Learn about tuples by helping out competitors in the Tisbury Treasure Hunt."
+}
