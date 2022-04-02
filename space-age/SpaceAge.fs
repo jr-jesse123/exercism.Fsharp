@@ -26,11 +26,13 @@ let getRate =
 let secondsToYear seconds = 
     seconds / 31557600.0
 
+let multiply a b = a * b
+
 let age (planet: Planet) (seconds: int64): float = 
     planet 
     |> getRate 
     |> getOrbitalPeriod 
-    |> (*) (float seconds)
+    |> multiply (float seconds)
     |> secondsToYear
     |> float
     
