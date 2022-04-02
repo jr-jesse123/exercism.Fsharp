@@ -1,0 +1,20 @@
+{
+  "authors": [
+    "ErikSchierboom"
+  ],
+  "files": {
+    "solution": [
+      "BookingUpForBeauty.fs"
+    ],
+    "test": [
+      "BookingUpForBeautyTests.fs"
+    ],
+    "exemplar": [
+      ".meta/Exemplar.fs"
+    ]
+  },
+  "forked_from": [
+    "csharp/booking-up-for-beauty"
+  ],
+  "blurb": "Learn about dates and time by building an appointment scheduler for a beauty salon"
+}
