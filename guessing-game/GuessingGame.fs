@@ -6,3 +6,4 @@ let reply (guess: int): string =
     | 41 | 43 -> "So close"
     | g when g < 41 -> "Too low"
     | g when g > 43 -> "Too high"
+    | _ -> failwith "never matched value"
