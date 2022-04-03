@@ -15,10 +15,9 @@ let hasSameRow (a,_) (b,_) = a = b
 let hasSameColum (_,a) (_,b) = a = b
 
 let hasSameDiagonal (a,b) (c,d) = 
-    match a - c , b - d with
-    |x,y when x = y -> true
-    | _ -> a + b = c + d
-
+    a - c = b - d || a + b = c + d
+    
+    
 let conditions = [
     hasSameColum
     hasSameRow
