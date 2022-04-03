@@ -1,9 +1,4 @@
 module Clock
-// type QuocientAndRemaing = {Quocient:int;Remaing:int}
-
-let between begining final input = input >= begining && input <= final 
-
-
 module Clock = 
     let getIntAndMod input divisor =
         let Quocient = input / divisor
@@ -21,6 +16,7 @@ module Clock =
 
     let (|NegativeInt|_|) nr = 
         if nr <0 then Some nr else None
+        
     [<CustomEquality>]
     [<CustomComparison>]
     type  Clock = private Clock of TotalMinutes:int 
@@ -62,10 +58,6 @@ module Clock =
 
 
     let add  minutes (clock: Clock) = 
-        //let minutes = (hours * 60) + minutes
-        // let (hours , minutsLeft) =  + minutes + clock.value |/| 60
-        // let  ( days ,hoursLeft) = hours  |/| 24
-        //Clock (hoursLeft + minutsLeft)
         clock.Add minutes
         
     let create hour min =
@@ -83,10 +75,3 @@ let subtract minutes clock = Clock.add  (- minutes) clock
 
 let display (clock: Clock.Clock) = 
     sprintf "%s:%s" (clock.Hours.ToString("00")) (clock.Minutes'.ToString("00"))
-
-
-
-let clock1 = create 10 37
-let clock2 = create 34 37
-
-clock1 = clock2 
