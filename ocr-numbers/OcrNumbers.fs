@@ -15,7 +15,7 @@ let charToDisplayPart c =
     | ' ' -> Empty
     | _ -> failwith "unexcpected char"
 
-let rowToDisplayLine str = 
+let rowToDisplayLine (str: string) = 
     let parts = 
         str 
         |> Seq.map charToDisplayPart 
@@ -34,7 +34,7 @@ let strToDisplay str =
 
 
 let DisplayToStr d = 
-    match strToDisplay d with
+    match  d with
     | (Empty,UndersCore, Empty) , 
       (Pipe, Empty, Pipe), 
       (Pipe,UndersCore,Pipe) ->  "0"
@@ -86,6 +86,53 @@ let DisplayToStr d =
     | _ ->  "?"
 
 
+
+
+open System
+open System.Linq
+let split lst =
+    
+  let folder (a) (curr, acc) =
+      match a with
+      | _ when String.IsNullOrWhiteSpace a  ->  [a] , curr::acc
+      | _ ->  a::curr , acc
+
+  let result = List.foldBack folder (lst) ([], [])
+  ((fst result)::(snd result)).SkipLast(1) |> Seq.toList
+  
+
+module Option = 
+  let apply fOpt xOpt = 
+    match fOpt , xOpt with  
+    | Some f , x -> Some (f x)
+    | _ -> None
+
+  let retn = Option.Some
+module List = 
+  // let rec traverseOptionA f list = 
+  //   let (<*>) = Option.apply
+  //   let retn = Option.Some
+
+  //   let cons head tail = head::tail
+
+  //   match list with
+  //   | [] -> retn []
+  //   | head::tail ->
+  //     retn  cons <*> (f head) <*> (traverseOptionA f tail)
+    
+  let rec traverseOptionM f list = 
+    let (>>=) x f = Option.bind f x
+    let retn = Option.Some
+
+    let cons head tail = head::tail 
+
+    match list with
+    | [] -> retn []
+    | head::tail ->
+      f head >>= (fun h ->
+      traverseOptionM f tail >>= (fun t ->
+      retn (cons h t)))
+
 open System
 
 let getDigitList (input: string list) = 
@@ -96,35 +143,100 @@ let getDigitList (input: string list) =
     |> Seq.map (Seq.toList)
 
 let convert (input: string list) =
-    try
-        getDigitList input
-        //|> Seq.map (Seq.map (fun str -> if String.IsNullOrWhiteSpace str then None else Some str))
+    let convert' x = 
+      try
+          getDigitList x
+          // |> Seq.map (Seq.map (fun str -> if String.IsNullOrWhiteSpace str then "," else str))
+          
+          |> Seq.map strToDisplay
+          |> Seq.map DisplayToStr
+          |> Seq.map char
+          |> Seq.toArray
+          |> String
+          |> Some 
+          
 
-        |> Seq.map DisplayToStr
-        |> Seq.map char
-        |> Seq.toArray
-        |> String
-        |> Some 
-        
+          // DisplayToStr input |> Some
+      with
+      |ex -> None
+      
+    split input
+    |> List.map convert'
+    |> List.traverseOptionM (id)
+    |> Option.map (String.concat ",")
 
-        // DisplayToStr input |> Some
-    with
-    |ex -> None
-     
 
-open System
-[ "    _  _ ";
-  "  | _| _|";
-  "  ||_  _|";
-  "         ";
-  "    _  _ ";
-  "|_||_ |_ ";
-  "  | _||_|";
-  "         ";
-  " _  _  _ ";
-  "  ||_||_|";
-  "  ||_| _|";
-  "         " ] 
-|> List.map (fun str -> if String.IsNullOrWhiteSpace str then None else Some str)
 
-|>ignore
+// open System.Linq
+// let split lst =
+    
+//   let folder (a) (curr, acc) =
+//       match a with
+//       | _ when String.IsNullOrWhiteSpace a  ->  [a] , curr::acc
+//       | _ ->  a::curr , acc
+
+//   let result = List.foldBack folder (lst) ([], [])
+//   ((fst result)::(snd result)).SkipLast(1) |> Seq.toList
+  
+
+// module Option = 
+//   let apply fOpt xOpt = 
+//     match fOpt , xOpt with  
+//     | Some f , x -> Some (f x)
+//     | _ -> None
+
+//   let retn = Option.Some
+// module List = 
+//   // let rec traverseOptionA f list = 
+//   //   let (<*>) = Option.apply
+//   //   let retn = Option.Some
+
+//   //   let cons head tail = head::tail
+
+//   //   match list with
+//   //   | [] -> retn []
+//   //   | head::tail ->
+//   //     retn  cons <*> (f head) <*> (traverseOptionA f tail)
+    
+//   let rec traverseOptionM f list = 
+//     let (>>=) x f = Option.bind f x
+//     let retn = Option.Some
+
+//     let cons head tail = head::tail 
+
+//     match list with
+//     | [] -> retn []
+//     | head::tail ->
+//       f head >>= (fun h ->
+//       traverseOptionM f tail >>= (fun t ->
+//       retn (cons h t)))
+// open System
+
+[ "   ";
+          "  |";
+          "  |";
+          "   " ]//|> List.map ((=) "         ")  
+|> split
+//|> List.map (fun x -> (String.replicate x.Length " " )::x)
+|> List.map convert
+|> List.traverseOptionM (id)
+|> Option.map (String.concat ",")
+
+
+//|> List.iter (printfn "%s")
+//|> convert
+
+|> ignore 
+
+
+
+
+// [ "   ";
+//   "  |";
+//   "  |";
+//   "   " ] |> convert 
+
+// [ "    _  _ ";
+//   "  | _| _|";
+//   "  ||_  _|";
+//   "         "; ] |> convert
