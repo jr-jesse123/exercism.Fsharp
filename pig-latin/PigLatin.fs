@@ -1,13 +1,16 @@
 module PigLatin
 
-open System
-let isVowel c = 
-    List.contains c ["a"; "e"; "i"; "o"; "u"; "yt"; "xr"]  
+let vowels =  ["a"; "e"; "i"; "o"; "u";] 
+let vowels' =  ["a"; "e"; "i"; "o"; "u"; "y";] 
 
-let isConsoant = isVowel >> not
+open System
+let isVowel  vowelsList c = 
+    List.contains c  vowelsList
+
+let isConsoant vowelsList = (isVowel vowelsList) >> not
 
 let startWithVoewl (word: string) = 
-    word[0] |> string |> isVowel
+    word[0] |> string |> isVowel vowels
 
 let (|StartsWithVoewl|_|) (word:string) = 
     startWithVoewl word
@@ -18,11 +21,15 @@ let startsWithConsoant  =
 
 
 let getAllBeginningConsoants (word: string) = 
-    word 
-    |> Seq.takeWhile (string >> isConsoant) 
-    |> Seq.toArray
-    |> String
-
+    if startsWithConsoant word then
+        word
+        |> Seq.skip 1 
+        |> Seq.takeWhile (string >> isConsoant vowels') 
+        |> Seq.toArray
+        |> String
+        |> (+) (string word[0])
+    else
+        ""
 
 let rec moveConsoant (word: string, consoants: string) = 
     if startsWithConsoant word then
@@ -56,18 +63,35 @@ let consoants = getAllBeginningConsoants word
 
 
 
-let Rule1 (word: string) = 
+let translateWord (word: string) = 
     match word with
+    |  word when word[1] = 'y' -> 
+        word |> Seq.rev |> Seq.toArray |> String 
+        |> fun x -> x + "ay"
+    
+
+    |  word when word[0..1] = "xr" || word[0..1] = "yt"  -> 
+        word + "ay"
+    
     | StartsWithVoewl word -> word + "ay"
+    
     | word when word.StartsWith("qu") -> 
         word[2..] + word[0..1] + "ay"
+
+    
+    | ConsoantsWithY word -> 
+        let sndPart = getAllBeginningConsoants word
+        let fstParts = word[sndPart.Length..]
+        String.concat "" [fstParts;sndPart;"ay"]
     | StartsWithConsoant word when word[1..2] = "qu" -> 
         word[3..] + word[0..2] + "ay"
     
-    | ConsoantsWithY word -> failwith "Consonants with y"
     
     | StartsWithConsoant word -> moveConsoant (word, "") + "ay"
     
     | _-> failwith "not implemented"
 
-let translate input = Rule1 input
+let translate (input: string) = 
+    input.Split " "
+    |> Array.map translateWord
+    |> String.concat " "
