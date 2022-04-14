@@ -1,9 +1,16 @@
 module HighScores
 
-let scores (values: int list): int list = failwith "You need to implement this function."
+let scores (values: int list): int list = values
 
-let latest (values: int list): int = failwith "You need to implement this function."
+let latest (values: int list): int = List.last values
 
-let personalBest (values: int list): int = failwith "You need to implement this function."
+let personalBest (values: int list): int = List.max values
 
-let personalTopThree (values: int list): int list = failwith "You need to implement this function."
+
+let personalTopThree (values: int list): int list = 
+        List.sortDescending values
+        |> List.chunkBySize 3  
+        |> List.head
+
+
+
