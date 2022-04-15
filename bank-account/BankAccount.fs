@@ -1,33 +1,44 @@
 module BankAccount
 open System
+
+type State = 
+| Open 
+| Closed
+
 type AccountInfo = 
     {
         Id:Guid 
-        History: Decimal List
+        mutable History: Decimal List
+        mutable State: State
     }
-with 
-    member this.Balance = this.History |> List.sum
-    static member Create () = Closed {Id=Guid.NewGuid() ; History = []}
-    member this.UpdateBalance value = {this with History = value::this.History}
+module AccountInfo = 
+    let Balance this = this.History |> List.sum
+    let Create () =  {Id=Guid.NewGuid() ; History = [] ; State=Closed}
+    let UpdateBalance value this = 
+        this.History <- value::this.History
+        this
 
-and Account = 
-| Open of AccountInfo
-| Closed of AccountInfo
+    let Open this = {this with State= Open}
+    let Close this = {this with State = Closed}
 
 let mkBankAccount() = AccountInfo.Create()
 
 let openAccount account = 
-    match account with
-    | Closed acc -> Open acc
+    match account.State with
+    | Closed -> AccountInfo.Open account
     | _ -> failwith "can´t open already opened account"
 
-let closeAccount account = failwith "You need to implement this function."
+let closeAccount account = 
+    AccountInfo.Close account
 
 let getBalance account = 
-    match account with
-    | Open acc -> Some acc.Balance   
-    | _ -> None
+    match account.State with
+    | Open  -> Some (AccountInfo.Balance account)
+    | Closed -> None
+
+
+
 let updateBalance change account = 
-    match account with
-    | Open acc -> Some (acc.UpdateBalance change)
-    | Closed acc -> None
+    match account.State with
+    | Open  ->  (AccountInfo.UpdateBalance change account)
+    | Closed -> failwith ""
