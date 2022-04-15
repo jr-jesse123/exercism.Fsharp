@@ -5,12 +5,23 @@ type State =
 | Open 
 | Closed
 
-type AccountInfo = 
+type BalanceMsg = 
+| GetBalance of AsyncReplyChannel<Decimal>
+| ChangeBalance of Decimal
+
+type AccountInfo  = 
     {
         Id:Guid 
         mutable History: Decimal List
         mutable State: State
     }
+// with 
+//     val  private  teste:int
+//     member this.MyReadWriteProperty
+//         with get () = this.teste
+//         and set (value) = this.teste <- value
+        
+    
 module AccountInfo = 
     let Balance this = this.History |> List.sum
     let Create () =  {Id=Guid.NewGuid() ; History = [] ; State=Closed}
@@ -35,7 +46,6 @@ let getBalance account =
     match account.State with
     | Open  -> Some (AccountInfo.Balance account)
     | Closed -> None
-
 
 
 let updateBalance change account = 
