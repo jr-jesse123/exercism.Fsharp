@@ -12,7 +12,7 @@ let ``Returns empty balance after opening`` () =
 
     getBalance account |> should equal (Some 0.0m)
 
-[<Fact(Skip = "Remove this Skip property to run this test")>]
+[<Fact>]
 let ``Check basic balance`` () =
     let account = mkBankAccount() |> openAccount
     let openingBalance = account |> getBalance 
