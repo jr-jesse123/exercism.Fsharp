@@ -1,71 +1,38 @@
 module BankAccount
 open System
 
-type State = 
-| Open 
-| Closed
-
-type BalanceMsg = 
-| GetBalance of AsyncReplyChannel<Decimal>
-| ChangeBalance of Decimal
-
-type AccountInfo ()  = 
-    let mutable History : decimal List = []
-    let mutable state = Closed
-    let getBalance() = History |> List.sum
-    let updateBalance value  =  History <- value::History
-
-    let balanceAgent = MailboxProcessor.Start(fun inbox ->
-        let rec innerLoop() = async{
-            match! inbox.Receive() with
-            | GetBalance repplyChannel -> repplyChannel.Reply (getBalance())
-            | ChangeBalance value -> updateBalance value
-
-            return! innerLoop()
-        }
-        innerLoop()
-
-    )
-
-    member _.Id = Guid.NewGuid()
-    member _.Balance ()  = 
-        balanceAgent.PostAndReply GetBalance
-
-    static member Create () =  AccountInfo()
-
-    member this.UpdateBalance value  = 
-        balanceAgent.Post (ChangeBalance value)
-        this
-
-    member this.Open = 
-        state<- Open
-        this
+type Message = 
+| OpenAccount
+| CloseAccount
+| GetBalance of AsyncReplyChannel<decimal option>
+| UpdateBalance of decimal
     
-    member this.Close  = 
-        state <- Closed
-        this
+type Account = MailboxProcessor<Message>
 
-    member _.State = state
+let processor (account:Account) =
+    let rec loop balance = async{
+        let! message = account.Receive()
+        match message with
+        | OpenAccount -> return! loop (Some 0.0M)
+        | CloseAccount -> return! loop None
+        | GetBalance channel -> channel.Reply balance ; return! loop balance
+        | UpdateBalance change -> return! loop (balance |> Option.map((+) change))
+    }
+    loop None
 
+let mkBankAccount() = 
+    MailboxProcessor.Start(fun account -> processor account )
     
+let openAccount (account: Account) = 
+    account.Post OpenAccount; account
 
-let mkBankAccount() = AccountInfo.Create()
+let closeAccount (account: Account) = 
+    account.Post CloseAccount
+    account
 
-let openAccount (account: AccountInfo) = 
-    match account.State with
-    | Closed ->  account.Open
-    | _ -> failwith "can´t open already opened account"
+let getBalance (account: Account) = 
+    let replly = account.PostAndAsyncReply GetBalance 
+    Async.RunSynchronously replly
 
-let closeAccount (account: AccountInfo) = 
-    account.Close
-
-let getBalance (account: AccountInfo) = 
-    match account.State with
-    | Open  -> Some (account.Balance ())
-    | Closed -> None
-
-
-let updateBalance change (account: AccountInfo) = 
-    match account.State with
-    | Open  ->  (account.UpdateBalance  change)
-    | Closed -> failwith ""
+let updateBalance change (account: Account) = 
+    account.Post (UpdateBalance change); account
