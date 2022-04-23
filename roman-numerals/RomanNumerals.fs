@@ -1,84 +1,19 @@
 module RomanNumerals
-let romanList =     
-    [1,"I"; 5, "V"; 10, "X"; 50, "L"; 100, "C"; 500, "D"; 1000, "M"]
-    |> List.rev
+open System
 
-let romanMap = 
-    romanList
-    |> Map
-
-let getResultAndRest dividend divisor : int * int  =
-    let result = dividend / divisor
-    result , dividend % divisor
-
-
+let placeValue   ten five one digit = 
+    match digit with
+    | 0 -> ""
+    | 1 | 2 | 3 -> String (one, digit)
+    | 4 -> sprintf "%c%c" one five
+    | 5 -> sprintf "%c" five
+    | 6 | 7 | 8 -> sprintf "%c%s" five (String(one,digit - 5))
+    | 9 -> sprintf "%c%c" one ten
+    | _ -> invalidArg "digit" "invalid digit"
 
 
-let GetRomanGroups vlr = 
-    let mutable remaining : int = vlr
-    let mutable acc = []
-
-
-    for idx in [0..(romanList.Length - 1)] do 
-
-        let mutable romanValue , romanRep = romanList[idx]
-        let mutable (result, newRemaining) =  getResultAndRest remaining romanValue
-
-        let  romanRep' = 
-            let nxtRomanValue = 
-                try
-                    Some <| fst romanList[idx + 1]
-                with|ex-> None
-            let (nxtResult, nxtRemaining) = 
-                try
-                    ( getResultAndRest newRemaining ( fst romanList[idx + 1])  )
-                with|ex ->
-                    0 , 0
-            try
-                if false then failwith ""
-                else if result = 4    then (snd romanList[idx]) + (snd romanList[idx - 1]) 
-                // else if result = 4  then
-                //     (snd romanList[idx + 1]) + (snd romanList[idx - 1]) 
-                
-                else if (result = 1 && newRemaining = 4) then 
-                    newRemaining <- 0
-                    (snd romanList[idx + 1]) + (snd romanList[idx - 1])
-                
-                else if result = 0 && newRemaining.ToString().StartsWith("9") && nxtResult <> 0 && nxtRomanValue.IsSome then 
-                    if (newRemaining % nxtRomanValue.Value) <> newRemaining then
-                        //newRemaining <- 0//(newRemaining % 10)
-                        newRemaining <- (newRemaining % 10)
-                    else
-                        newRemaining <- (newRemaining % 10)
-                    result <- 1
-                    (snd romanList[idx + 2] ) + (snd romanList[idx ])
-
-                else romanRep
-            with|ex ->
-                romanRep
-                
-
-        result <-  if romanRep <>  romanRep' then 1 else result
-        romanRep <- romanRep'
-
-        remaining <- newRemaining
-        acc <- (result , romanRep) :: acc
-    // for (romanValue, romanRep) in romanList do 
-
-        
-        
-    //     let (result, newRemaining) =  getResultAndRest remaining romanValue
-
-        
-
-    //     remaining <- newRemaining
-    //     acc <- (result , romanRep) :: acc
-    acc
-    
-    
-let roman arabicNumeral = 
-    GetRomanGroups arabicNumeral
-    |> List.rev
-    |> List.map (fun (repetitions, letter) -> String.replicate repetitions letter  )
-    |> List.reduceBack (+)
-
+let roman arabic = 
+    String( 'M', arabic / 1000) + 
+    placeValue 'M' 'D' 'C' (arabic % 1000 / 100) + 
+    placeValue 'C' 'L' 'X' (arabic % 100 / 10) + 
+    placeValue 'X' 'V' 'I' (arabic % 10)

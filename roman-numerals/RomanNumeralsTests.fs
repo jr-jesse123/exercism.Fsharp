@@ -21,57 +21,57 @@ let ``3 is III`` () =
 let ``4 is IV`` () =
     roman 4 |> should equal "IV"
 
-[<Fact>]
+[<Fact(Skip = "Remove this Skip property to run this test")>]
 let ``5 is V`` () =
     roman 5 |> should equal "V"
 
-[<Fact>]
+[<Fact(Skip = "Remove this Skip property to run this test")>]
 let ``6 is VI`` () =
     roman 6 |> should equal "VI"
 
-[<Fact>]
+[<Fact(Skip = "Remove this Skip property to run this test")>]
 let ``9 is IX`` () =
     roman 9 |> should equal "IX"
 
-[<Fact>]
+[<Fact(Skip = "Remove this Skip property to run this test")>]
 let ``27 is XXVII`` () =
     roman 27 |> should equal "XXVII"
 
-[<Fact>]
+[<Fact(Skip = "Remove this Skip property to run this test")>]
 let ``48 is XLVIII`` () =
     roman 48 |> should equal "XLVIII"
 
-[<Fact>]
+[<Fact(Skip = "Remove this Skip property to run this test")>]
 let ``49 is XLIX`` () =
     roman 49 |> should equal "XLIX"
 
-[<Fact>]
+[<Fact(Skip = "Remove this Skip property to run this test")>]
 let ``59 is LIX`` () =
     roman 59 |> should equal "LIX"
 
-[<Fact>]
+[<Fact(Skip = "Remove this Skip property to run this test")>]
 let ``93 is XCIII`` () =
     roman 93 |> should equal "XCIII"
 
     
     
-[<Fact>]
+[<Fact(Skip = "Remove this Skip property to run this test")>]
 let ``141 is CXLI`` () =
     roman 141 |> should equal "CXLI"
 
-[<Fact>]
+[<Fact(Skip = "Remove this Skip property to run this test")>]
 let ``163 is CLXIII`` () =
     roman 163 |> should equal "CLXIII"
 
-[<Fact>]
+[<Fact(Skip = "Remove this Skip property to run this test")>]
 let ``402 is CDII`` () =
     roman 402 |> should equal "CDII"
 
-[<Fact>]
+[<Fact(Skip = "Remove this Skip property to run this test")>]
 let ``575 is DLXXV`` () =
     roman 575 |> should equal "DLXXV"
 
-[<Fact>]
+[<Fact(Skip = "Remove this Skip property to run this test")>]
 let ``911 is CMXI`` () =
     roman 911 |> should equal "CMXI"
 
