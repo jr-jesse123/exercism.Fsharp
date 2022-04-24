@@ -13,7 +13,7 @@ let (|WordWithNondDigit|_|) (input: string) =
 
 let largestProduct (input: string) seriesLength : int option = 
     match input, seriesLength with
-    | _ , lenght when lenght < 0 -> None    
+    | _ , lenght when lenght < 0 -> None
     | _ , 0 -> Some 1
     | "" , lenght when lenght > 0 -> None   
     | WordWithNondDigit sentence , _ -> None
