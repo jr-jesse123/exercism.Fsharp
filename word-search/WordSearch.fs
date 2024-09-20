@@ -1,3 +1,6 @@
 module WordSearch
 
-let search grid wordsToSearchFor = failwith "You need to implement this function."
+let search grid wordsToSearchFor: Map<string,((int * int) * (int * int)) option>    =
+    List.map (fun x -> x, None) wordsToSearchFor
+    |> Map.ofList
+
