@@ -412,4 +412,5 @@ FodyWeavers.xsd
 *.assets.cache
 *.sln
 *.ncrunchsolution
-hello-world/obj/Debug/net6.0/HelloWorld.assets.cache
+**/debug/*
+**/obbj/*
