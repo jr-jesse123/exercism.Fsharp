@@ -106,8 +106,8 @@ let findTopLeftToBottonRight grid word =
 
         let fixX y x = 
             match y - middle with
-            | offsetTop when offsetTop > 0 -> x - offsetTop
-            | offSetBotton when offSetBotton < 0 -> x + offSetBotton
+            | offsetBottom when offsetBottom > 0 -> x - offsetBottom
+            | offSetTop when offSetTop < 0 -> x + offSetTop
             | middle -> x
 
         let fixY x y = 
@@ -124,6 +124,60 @@ let findTopLeftToBottonRight grid word =
     findWordLeftToRight columGrid word
     |> Option.map invertXYasis    
 
+
+let  findTopBottonRightToTopLeft grid word =
+    let columGrid = 
+        grid
+        |> List.toArray
+        |> Grid.ToLeftTopBottonRight
+        |> List.map Seq.rev
+        |> List.map Array.ofSeq
+        |> List.map String
+        //|> List.rev // fixes the y idx
+        
+
+    let invertXYasis ((xa, ya),(xb,yb))  =  
+        let highgt = columGrid.Length
+        let width = columGrid[0].Length
+
+        let middle = (highgt + 1) / 2
+
+        let fixX y x = 
+            //match y - middle with
+            //| offSetBottom when offSetBottom > 0 -> x - offSetBottom
+            //| offSetTop when offSetTop < 0 -> x + offSetTop
+            //| middle -> x
+            //match x with
+            //| xx when xx > 5 ->
+            //    Math.Abs(xx - 10)
+            //| xx -> 
+
+            //x
+            Math.Abs(x - 10)
+
+        let fixY (x:int) y = 
+            let x = fixX y x
+            let emptSpaces = 
+                match y with
+                |y' when y' > 9 -> 1
+                |y' when y' < 9 -> y' + 9
+                | y' -> y'
+
+            let firstCharY =
+                Math.Abs (y - 11 )
+
+            firstCharY + x - 1
+                
+                
+            
+            
+            
+
+        (fixX ya xa, fixY xa ya) , (fixX yb xb, fixY xb yb)
+
+    findWordLeftToRight columGrid word
+    |> Option.map invertXYasis        
+
 let findWords grid word = 
     [
         word, findWordLeftToRight grid word
@@ -131,6 +185,7 @@ let findWords grid word =
         word, findTopToBotton grid word
         word, findBottonToTop grid word
         word, findTopLeftToBottonRight grid word
+        word, findTopBottonRightToTopLeft grid word
     ]
     |> List.filter (snd >> Option.isSome)
     |> List.tryHead
