@@ -111,13 +111,13 @@ let findBottonToTop grid word =
     findWordRightToLeft columGrid word
     |> Option.map invertXYasis
 
-let ToLeftTopBottonRight  edges (grid: 'a array array)= 
+let ToLeftTopBottonRight  (edges: coors seq) (grid: 'a array array)= 
         [
             for edge in edges do 
                 
                     yield 
                         [|
-                            let mutable (x, y ) = edge
+                            let mutable {x=x ; y=y} = edge
                             
                             while y < grid.Length && x < grid[0].Length do
                                 yield grid[y][x]
@@ -129,13 +129,14 @@ let ToLeftTopBottonRight  edges (grid: 'a array array)=
         |> List.toArray
 
 
-
+let toCoors (x,y) = {x=x;y=y}
 
 let findTopLeftToBottonRight (grid: string list) (word: string) = 
     let edges = 
             [for a in 0..9 do yield a, 0] @
             [for a in 0..9 do yield 0, a] 
             |> List.distinct
+            |> List.map  toCoors
         
     let originalPositions = 
         grid
@@ -161,11 +162,12 @@ let findTopLeftToBottonRight (grid: string list) (word: string) =
     )
 
 
-let findTopBottonRightToTopLeft (grid: string list) (word: string) = 
+let findBottonRightToTopLeft (grid: string list) (word: string) = 
     let edges = 
             [for a in 0..9 do yield a, 0] @
             [for a in 0..9 do yield 0, a] 
             |> List.distinct
+            |> List.map toCoors
         
     let word = word.ToCharArray() |> Array.rev |> String
 
@@ -221,10 +223,32 @@ let ToBottonLeftToTopRight (edges: coors seq)  (grid: 'a array array): 'a array 
 
         ]
         |> List.toArray
+
+
+
+let ToRightToBottomLeft (edges: coors seq)  (grid: 'a array array): 'a array array= 
+    if grid.Length <> grid[0].Length then
+        [||]
+    else
+        [
+            for edge in edges do 
+                    yield 
+                        [|
+                            let mutable {x=x;y=y} = edge
+                        
+                            while y >= 0 && y < grid.Length  && x >= 0 && x < grid[0].Length do
+                                yield grid[y][x]
+                                
+                                x <- x - 1 
+                                y <- y + 1
+                        |]
+
+        ]
+        |> List.toArray
     
         
 
-let findTopBottonLeftToTopRight (grid: string list) (word: string) = 
+let findBottonLeftToTopRight (grid: string list) (word: string) = 
     let edges = 
             [for a in 0..9 do yield a, 9] @
             [for a in 0..9 do yield 0, a] 
@@ -256,17 +280,63 @@ let findTopBottonLeftToTopRight (grid: string list) (word: string) =
         ((xa + 1 ,ya + 1), (xb + 1,yb + 1)) 
     )
 
+let findTopRightTobottomLeft (grid: string list) (word: string) = 
+    let edges = 
+            [for a in 0..9 do yield a, 0] @
+            [for a in 0..9 do yield 9, a] 
+            |> List.distinct
+            |> List.map (fun (x,y) -> {x=x;y=y})
+        
+
     
+    let originalPositions = 
+        grid
+        |> List.mapi(fun ydx line-> 
+            line.ToCharArray() |> Array.mapi (fun xidx c -> {char=c;pos = {x=xidx;y= ydx}})
+            )
+
+    //let word = word.ToCharArray() |> Array.rev |> String
+    originalPositions
+    |> List.toArray
+    |> ToRightToBottomLeft edges 
+    //|> Array.map (Array.map _.char)
+    |> Array.tryFind (fun lineArray ->
+        lineArray |> Array.map _.char |> String |> _.Contains(word)
+    )
+    |> Option.map (fun lineArray -> 
+        let start , lenght =
+            lineArray |> Array.map _.char |> String |> _.IndexOf(word) , word.Length
+
+        lineArray[start].pos, lineArray[start + lenght - 1].pos )
+    
+    |> Option.map (fun ({x=xa;y=ya}, {x=xb;y=yb}) ->
+        ((xa + 1 ,ya + 1), (xb + 1,yb + 1)) 
+    )
+
+module Option = 
+    //let Apply fOpt xOpt = 
+    //    match fOpt , xOpt with
+    //    | Some f, x -> Some (f x)
+    //    | _ -> None
+    let Or xOpt YOpt =
+        match xOpt, YOpt with
+        | Some x, Some y -> Some x
+        | Some x, None -> Some x
+        | None , Some y -> Some y
+        | None, None -> None
+
+let (or) = Option.Or
 
 let findWords grid word = 
     [
-        word, findWordLeftToRight grid word
-        word, findWordRightToLeft grid word
-        word, findTopToBotton grid word
-        word, findBottonToTop grid word
-        word, findTopLeftToBottonRight grid word
-        word, findTopBottonRightToTopLeft grid word
-        word, findTopBottonLeftToTopRight grid word
+        word, findWordLeftToRight grid word or
+            findWordRightToLeft grid word or
+            findTopToBotton grid word or
+            findBottonToTop grid word or
+            findTopLeftToBottonRight grid word or
+            findBottonRightToTopLeft grid word or
+            findBottonLeftToTopRight grid word or
+            findTopRightTobottomLeft grid word
     ]
     |> List.filter (snd >> Option.isSome)
     |> List.tryHead
