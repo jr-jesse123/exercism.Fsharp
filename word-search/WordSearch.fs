@@ -9,10 +9,12 @@ type OptBuilder() =
 
 let optBuilder = OptBuilder()
 
+type coors = {x:int;y:int}
+
 type charWithPos = 
     {
         char: char
-        pos: int * int
+        pos: coors
     }
 
 
@@ -22,7 +24,7 @@ let findWordLeftToRight (grid: string list) (word: string) =
     let originalPositions = 
         grid
         |> List.mapi(fun ydx line-> 
-            line.ToCharArray() |> Array.mapi (fun xidx c -> {char=c;pos = xidx, ydx})
+            line.ToCharArray() |> Array.mapi (fun xidx c -> {char=c;pos = {x=xidx;y=ydx}  })
             )
     
     originalPositions
@@ -38,7 +40,7 @@ let findWordLeftToRight (grid: string list) (word: string) =
             ]       
         foundPositons.Head.pos , foundPositons |> List.last |> _.pos
         )
-    |> Option.map (fun ((xa,ya), (xb,yb)) ->
+    |> Option.map (fun ({x=xa;y=ya},{x=xb;y=yb}) ->
         ((xa + 1 ,ya + 1), (xb + 1,yb + 1)) 
     )
 
@@ -109,6 +111,23 @@ let findBottonToTop grid word =
     findWordRightToLeft columGrid word
     |> Option.map invertXYasis
 
+let ToLeftTopBottonRight  edges (grid: 'a array array)= 
+        [
+            for edge in edges do 
+                
+                    yield 
+                        [|
+                            let mutable (x, y ) = edge
+                            
+                            while y < grid.Length && x < grid[0].Length do
+                                yield grid[y][x]
+                                x  <- x + 1 
+                                y <- y + 1
+                        |]
+
+        ]
+        |> List.toArray
+
 
 
 
@@ -118,104 +137,126 @@ let findTopLeftToBottonRight (grid: string list) (word: string) =
             [for a in 0..9 do yield 0, a] 
             |> List.distinct
         
-
-
-    let ToLeftTopBottonRight (grid: 'a array array) = 
-            [
-                for edge in edges do 
-                    
-                        yield 
-                            [|
-                                let mutable (x, y ) = edge
-                                
-                                while y < grid.Length && x < grid[0].Length do
-                                    yield grid[y][x]
-                                    x  <- x + 1 
-                                    y <- y + 1
-                            |]
-               
-                //for offset in 0..(grid.Length - 1) do 
-                //     yield   
-                //        String.replicate (grid.Length - offset - 1) " " + 
-                //        grid[offset]  + 
-                //        String.replicate offset " "
-            ]
-            |> List.toArray
-
-
     let originalPositions = 
         grid
         |> List.mapi(fun ydx line-> 
-            line.ToCharArray() |> Array.mapi (fun xidx c -> {char=c;pos = xidx, ydx})
+            line.ToCharArray() |> Array.mapi (fun xidx c -> {char=c;pos = {x=xidx;y=ydx}})
             )
     
-    grid
+    originalPositions
     |> List.toArray
-    |> Array.map (_.ToCharArray())
-    |> ToLeftTopBottonRight
-    |> Array.map String
-    |> Array.mapi (fun y line -> (line.IndexOf word ) , y )
-    |> Array.tryFind (fun (x, y) -> x >= 0)
-    |> Option.map (fun (x,y) -> (x,y) , (x + word.Length - 1,y))
-    |> Option.map (fun ((xa,ya), (xb,yb)) ->
-        ((xa ,ya ), (xb ,yb + xb )) 
+    //|> Array.map (_.ToCharArray())
+    |> ToLeftTopBottonRight edges
+    |> Array.tryFind (fun lineArray ->
+        lineArray |> Array.map _.char |> String |> _.Contains(word)
     )
-    |> Option.map (fun ((xa,ya), (xb,yb)) ->
+    |> Option.map (fun lineArray -> 
+        let start , lenght =
+            lineArray |> Array.map _.char |> String |> _.IndexOf(word) , word.Length
+
+        lineArray[start].pos, lineArray[start + lenght - 1].pos )
+    
+    |> Option.map (fun ({x=xa;y=ya}, {x=xb;y=yb}) ->
         ((xa + 1 ,ya + 1), (xb + 1,yb + 1)) 
     )
 
-let  findTopBottonRightToTopLeft grid word =
-    let columGrid = 
+
+let findTopBottonRightToTopLeft (grid: string list) (word: string) = 
+    let edges = 
+            [for a in 0..9 do yield a, 0] @
+            [for a in 0..9 do yield 0, a] 
+            |> List.distinct
+        
+    let word = word.ToCharArray() |> Array.rev |> String
+
+
+
+    
+    let originalPositions = 
         grid
+        |> List.mapi(fun ydx line-> 
+            line.ToCharArray() |> Array.mapi (fun xidx c -> {char=c;pos = {x=xidx;y= ydx}})
+            )
+
+    originalPositions
+    |> List.toArray
+    |> ToLeftTopBottonRight edges
+    |> Array.tryFind (fun lineArray ->
+        lineArray |> Array.map _.char |> String |> _.Contains(word)
+    )
+    |> Option.map (fun lineArray -> 
+        let start , lenght =
+            lineArray |> Array.map _.char |> String |> _.IndexOf(word) , word.Length
+
+        lineArray[start + lenght - 1].pos, lineArray[start].pos )
+    
+    |> Option.map (fun ({x=xa;y=ya}, {x=xb;y=yb}) ->
+        ((xa + 1 ,ya + 1), (xb + 1,yb + 1)) 
+    )
+
+    
+
+let ToBottonLeftToTopRight (edges: coors seq)  (grid: 'a array array): 'a array array= 
+    //let edges = 
+    //        [for a in 0..9 do yield 0, a] @
+    //        [for a in 0..9 do yield a, 9] 
+    //        |> List.distinct
+
+    //grid[0][9]
+    if grid.Length <> grid[0].Length then
+        [||]
+    else
+        [
+            for edge in edges do 
+                    yield 
+                        [|
+                            let mutable {x=x;y=y} = edge
+                        
+                            while y >= 0 && x < grid[0].Length do
+                                yield grid[y][x]
+                                
+                                x <- x + 1 
+                                y <- y - 1
+                        |]
+
+        ]
         |> List.toArray
-        |> Grid.ToLeftTopBottonRight
-        |> List.map Seq.rev
-        |> List.map Array.ofSeq
-        |> List.map String
+    
         
 
-    let invertXYasis ((xa, ya),(xb,yb))  =  
-        let highgt = columGrid.Length
-        let width = columGrid[0].Length
+let findTopBottonLeftToTopRight (grid: string list) (word: string) = 
+    let edges = 
+            [for a in 0..9 do yield a, 9] @
+            [for a in 0..9 do yield 0, a] 
+            |> List.distinct
+            |> List.map (fun (x,y) -> {x=x;y=y})
+        
+    
+    
+    let originalPositions = 
+        grid
+        |> List.mapi(fun ydx line-> 
+            line.ToCharArray() |> Array.mapi (fun xidx c -> {char=c;pos = {x=xidx;y= ydx}})
+            )
 
-        let middle = (highgt + 1) / 2
+    
+    originalPositions
+    |> List.toArray
+    |> ToBottonLeftToTopRight edges 
+    |> Array.tryFind (fun lineArray ->
+        lineArray |> Array.map _.char |> String |> _.Contains(word)
+    )
+    |> Option.map (fun lineArray -> 
+        let start , lenght =
+            lineArray |> Array.map _.char |> String |> _.IndexOf(word) , word.Length
 
-        let fixX y x = 
-            //match y - middle with
-            //| offSetBottom when offSetBottom > 0 -> x - offSetBottom
-            //| offSetTop when offSetTop < 0 -> x + offSetTop
-            //| middle -> x
-            //match x with
-            //| xx when xx > 5 ->
-            //    Math.Abs(xx - 10)
-            //| xx -> 
+        lineArray[start].pos, lineArray[start + lenght - 1].pos )
+    
+    |> Option.map (fun ({x=xa;y=ya}, {x=xb;y=yb}) ->
+        ((xa + 1 ,ya + 1), (xb + 1,yb + 1)) 
+    )
 
-            //x
-            Math.Abs(x - 10)
-
-        let fixY (x:int) y = 
-            let x = fixX y x
-            let emptSpaces = 
-                match y with
-                |y' when y' > 9 -> 1
-                |y' when y' < 9 -> y' + 9
-                | y' -> y'
-
-            let firstCharY =
-                Math.Abs (y - 11 )
-
-            firstCharY + x - 1
-                
-                
-            
-            
-            
-
-        (fixX ya xa, fixY xa ya) , (fixX yb xb, fixY xb yb)
-
-    findWordLeftToRight columGrid word
-    |> Option.map invertXYasis        
-
+    
 
 let findWords grid word = 
     [
@@ -225,6 +266,7 @@ let findWords grid word =
         word, findBottonToTop grid word
         word, findTopLeftToBottonRight grid word
         word, findTopBottonRightToTopLeft grid word
+        word, findTopBottonLeftToTopRight grid word
     ]
     |> List.filter (snd >> Option.isSome)
     |> List.tryHead

@@ -247,7 +247,7 @@ let ``Should locate words written bottom right to top left`` () =
         |> Map.ofList
     search grid wordsToSearchFor |> should equal expected
 
-[<Fact(Skip = "Remove this Skip property to run this test")>]
+[<Fact>]
 let ``Should locate words written bottom left to top right`` () =
     let grid = 
         [ "jefblpepre";
