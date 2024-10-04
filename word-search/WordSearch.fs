@@ -49,7 +49,7 @@ type GetStrings = string list -> CharGrid -> PositionedString list
 
 type SortGrid = CharGrid -> CharGrid
 
-type ToString = PositionedChar list -> string
+type ToString = PositionedChar array -> string
 //use case
 type Search = CharGrid -> string list -> Map<string, ((int * int) * (int * int)) option>
 
@@ -76,7 +76,7 @@ let makeBBottonLeftTopUpGrid : SortGrid =
         
 let toString: ToString = 
     fun charList ->
-        charList |> List.map _.Char |> List.toArray |> String
+        charList |> Array.map _.Char |>  String
 
 let getStrings  : GetStrings =
     let isContinuousChar previousChar currChar =
@@ -89,15 +89,15 @@ let getStrings  : GetStrings =
         
     let folder acc currChar =
         match acc with
-        |[] -> [[currChar]]
+        |[||] -> [|[|currChar|]|]
         | acc ->
-            let lastLine = List.last acc
-            if isContinuousChar (List.last lastLine) currChar then
-                acc[..acc.Length - 2] @ [lastLine @ [currChar]]
+            let lastLine = Array.last acc
+            if isContinuousChar (Array.last lastLine) currChar then
+                Array.append acc[..acc.Length - 2]   [|Array.append   lastLine  [|currChar|]|]
             else
-                acc @ [[currChar]]
+                Array.append acc  [|[|currChar|]|]
 
-    let getPositionedStrings  (words: string list) line =
+    let getPositionedStrings  (words: string list) (line :PositionedChar array)=
         let text = toString line
         words 
         |> List.map (fun word -> 
@@ -113,8 +113,8 @@ let getStrings  : GetStrings =
         let getPositionedStrings'= getPositionedStrings words
         let x= 
             grid
-            |> List.fold folder []
-            |> List.map getPositionedStrings'
+            |> List.fold folder [||]
+            |> Array.map getPositionedStrings'
         
         List.concat x
         
