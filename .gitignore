@@ -412,5 +412,7 @@ FodyWeavers.xsd
 *.assets.cache
 *.sln
 *.ncrunchsolution
-**/debug/*
-**/obbj/*
+**/Debug/*
+**/Debug/*.*
+**/obj/*.*
+obj
