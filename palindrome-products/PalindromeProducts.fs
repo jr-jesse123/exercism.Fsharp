@@ -2,6 +2,25 @@ module PalindromeProducts
 
 open System
 
+[<TailCall>]
+let products (range:'a list ) acc= 
+    let rec loop range acc =
+        match range with
+        | [x] ->     [x * x , (x,x)] @ acc 
+        | head::tail ->
+            //let base' = products tail
+            let current = 
+                [   yield  head * head, (head, head)
+                    for x in tail do
+                        let value = head * x
+                        
+                        yield value, (head,x)]
+            let newAcc =   current @ acc 
+            loop tail newAcc
+    
+    loop range []
+    |> List.rev
+    //|> List.sortBy (fun (a,(b,c)) -> b)
 //TODO: ELIMINAR ESTE SORT CARO, DEPOIS  CORRIGIR O ISPALINDROME ABAIXO  
 let isPalindrome' nr =
     let rec loop nr reversed = 
@@ -13,38 +32,7 @@ let isPalindrome' nr =
 //TODO: CHECK WITH MUTABLE STATE
 let isPalindrome (a,_) =
     //isPalindrome' a
-    //a.ToString().ToCharArray() |> Array.rev |> String |> int |> (=) a
-    true
-
-let isPalindrome'' a =
-    true
-    //isPalindrome' a
-    //a.ToString().ToCharArray() |> Array.rev |> String |> int |> (=) a
-
-
-
-[<TailCall>]
-let products (range:'a list ) acc= 
-    let output = ResizeArray(range.Length * range.Length)
-    let rec loop range acc =
-        match range with
-        | [x] ->     [x * x , (x,x)] @ acc 
-        | head::tail ->
-            //let base' = products tail
-            let current = 
-                [   yield  head * head, (head, head)
-                    for x in tail do
-                        let value = head * x
-                        //if isPalindrome'' value then 
-                        yield value, (head,x)]
-                        //else 
-                        //    ()
-            let newAcc =   current @ acc 
-            loop tail newAcc
-    
-    loop range []
-    |> List.rev
-    //|> List.sortBy (fun (a,(b,c)) -> b)
+    a.ToString().ToCharArray() |> Array.rev |> String |> int |> (=) a
 
 module List = 
     let tryMaxBy (mapper:'a -> 'b )(lst: 'a list) : 'a option = 
