@@ -20,8 +20,7 @@ let products (range:'a list ) acc=
     
     loop range []
     |> List.rev
-    //|> List.sortBy (fun (a,(b,c)) -> b)
-//TODO: ELIMINAR ESTE SORT CARO, DEPOIS  CORRIGIR O ISPALINDROME ABAIXO  
+
 let isPalindrome' nr =
     let rec loop nr reversed = 
         if nr = 0 then reversed
@@ -31,7 +30,6 @@ let isPalindrome' nr =
 
 //TODO: CHECK WITH MUTABLE STATE
 let isPalindrome (a,_) =
-    //isPalindrome' a
     a.ToString().ToCharArray() |> Array.rev |> String |> int |> (=) a
 
 module List = 
@@ -46,9 +44,8 @@ module List =
         | lst  -> lst |> List.minBy mapper |> Some
 
 
-let minFactor = 1
-let maxFactor = 9
 let largest minFactor maxFactor = 
+    if minFactor > maxFactor then raise (ArgumentException())
     products [minFactor..maxFactor] []
     |> List.filter isPalindrome
     |> List.sortByDescending fst
@@ -59,6 +56,7 @@ let largest minFactor maxFactor =
     |> Option.defaultValue (None, [])
 
 let smallest minFactor maxFactor = 
+    if minFactor > maxFactor then raise (ArgumentException())
     products [minFactor..maxFactor] []
     |> List.filter isPalindrome
     |> List.sortBy fst
