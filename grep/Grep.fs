@@ -1,95 +1,143 @@
 module Grep
-
-type Grep = 
-    string list ->  //files
-        string list ->  //flagArguments
-        string ->  //pattern
-        string list //result
-
 open System.IO
 open System
-open System.Runtime.CompilerServices
 
+(*
+ flags: 
+    filtering: -v (invert)   -i  (case insensitive)    -x (whole line)
+    formatting: -l (filename) -n (lineNumber)
+*)
+[<Flags>]
+type FilterFlags = 
+    | V =1
+    | I =2
+    | X= 4
 
-type FileDetails = {
-    FileName: string
-    Contents: (int * string) list
-} with
-    member this.ContainsPattern comparison (pattern:string) inverted  =
-        this.Contents
-        |> List.where (fun (lineNr, lineContent) -> 
-            lineContent.Contains(pattern, comparison) |> inverted
-            )
-        
+module FilterFlags = 
+    let from char = 
+            match char with
+            | 'v' -> FilterFlags.V
+            | 'i' -> FilterFlags.I
+            | 'x' -> FilterFlags.X
 
+[<Flags>]
+type FormatFlags = 
+    | L = 1
+    | N = 2
 
-
-let grep : Grep = 
-    fun files flagArguments pattern  ->
-        let contents = 
-            files
-            |> List.map (fun file -> file, File.ReadAllLines(file) |> Array.toList)
-            |> List.map (fun (file, lines) -> 
-                 {FileName=file ; Contents=lines |> List.mapi (fun lineNr lineContent ->  lineNr, lineContent)}
-            )
+module FormatFlags = 
+    let from char = 
+            match char with
+            | 'l' -> FormatFlags.L
+            | 'n' -> FormatFlags.N
             
-        contents
-        |> List.where (fun {FileName=fileName ; Contents=contents} -> 
-            match files with
-            |[] -> true
-            |_ -> files |> List.contains fileName
-             ) 
-        |> List.map (fun  fileDetails ->  
-            let comparisson = if List.contains  "-i" flagArguments then StringComparison.CurrentCultureIgnoreCase else StringComparison.CurrentCulture
-            (
-            fileDetails.FileName, 
-            fileDetails.ContainsPattern   
-                comparisson 
-                pattern 
-                (if List.contains "-v"  flagArguments then not else id))
+
+type GrepArgs = {
+    FileNames: string list
+    FilterFlags : FilterFlags
+    FormatFlags: FormatFlags
+    Pattern: string
+}
+
+type FileContent = {
+    FileName: string
+    FileContent: string list
+}
+
+type GetFileContents = 
+    unit  -> //path
+        FileContent[]
+
+module FileContent = 
+    let get : GetFileContents =
+        fun () ->
+            Directory.GetFiles("./") 
+            |> Array.map (fun path' -> 
+                let content = File.ReadAllLines path' |> Array.toList
+                {FileName= Path.GetFileName path'; FileContent=content}
             )
-        |> List.map (fun (fileName, contents) -> 
-            if List.contains "-x"   flagArguments  then
-                let comparisson = if List.contains  "-i" flagArguments then StringComparison.CurrentCultureIgnoreCase else StringComparison.CurrentCulture
-                (
-                    fileName, 
-                    contents 
-                    |> List.where (fun  (lineNr,lineContent) -> String.Equals(lineContent, pattern,comparisson) |> (if List.contains "-v"  flagArguments then not else id))
-                )
-            else
-                (fileName, contents)
-        )
-        |> List.where (fun (_,lines) -> lines |> List.isEmpty |> not)
+
+type MatchResult = {
+    FileName: string
+    LineNumber: int
+    LineContent: string
+}
+
+type Search = GrepArgs -> FileContent list -> MatchResult list
+
+let search : Search =
         
-        |> List.map (fun (fileName, contentList) -> 
-            contentList
-            |> List.map (fun (lineNr, lineContent) ->
-                if List.contains "-l" flagArguments then
-                    fileName
-                elif List.length  files > 1 &&  List.contains "-n" flagArguments |> not  then
-                    sprintf "%s:%s" 
-                        fileName
-                        lineContent
-                elif List.length  files > 1 &&  List.contains "-n" flagArguments then
-                    sprintf "%s:%i:%s" 
-                        fileName
-                        (lineNr + 1)
-                        lineContent
-                else
-                    sprintf "%s%s" 
-                        (if flagArguments |> List.contains "-n" then sprintf "%d:" (lineNr + 1) else "")
-                        lineContent
-            )
+    fun args files ->
+        let filteredBy f = 
+            args.FilterFlags &&& f = f
+
+        let equals = fun c a b  -> String.Equals(a,b,c)
+        let contains  = fun c (a: string) (b: string)  -> a.Contains(b,c)
+        let caseMode = if filteredBy FilterFlags.I then StringComparison.CurrentCultureIgnoreCase else StringComparison.CurrentCulture
+        let wideMode = if filteredBy FilterFlags.X then equals  else contains
+        let (|=|) =  (wideMode caseMode)
+        let invertMod = if filteredBy FilterFlags.V then not else id
+        
+        files
+        |> List.where (fun (fc: FileContent )-> match args.FileNames with |[] -> true |_ ->  args.FileNames |> List.contains fc.FileName )
+        |> List.map (fun fc -> 
+            fc.FileContent
+            |> List.mapi (fun lineNr lineContent -> {FileName=fc.FileName;LineNumber=lineNr + 1;LineContent=lineContent})
+            |> List.where (fun result ->  
+                result.LineContent |=| args.Pattern |> invertMod)
         )
         |> List.concat
-        |>  List.distinct //  junta nomes de arquivos
-        //|> ignore
-        //[]
         
-        
+let containFlag f flags = 
+    flags &&& f = f
+    
+type MatchToString = GrepArgs -> MatchResult -> string
+let matchToString : MatchToString = 
 
+    fun args  match' ->
+        let result = if containFlag FormatFlags.L args.FormatFlags then match'.FileName else match'.LineContent
+        let lineNr = 
+            if containFlag FormatFlags.N args.FormatFlags &&   
+                not (containFlag FormatFlags.L args.FormatFlags)
+            then match'.LineNumber.ToString() + ":" else ""
         
-        
-        
+        let fileName = 
+            if  args.FileNames.Length > 1 
+                && not (containFlag FormatFlags.L args.FormatFlags)
+                then match'.FileName + ":" 
+                else ""
 
+        sprintf "%s%s%s" fileName lineNr result
+
+
+type Grep = GrepArgs -> string list //result
+
+let grep'' : Grep =
+    fun args ->
+        FileContent.get () |> List.ofArray
+        |> search args 
+        |> List.map (matchToString args)
+ 
+let _filterFlags= ["-v"; "-i"; "-x"] |> set
+let _formatFlags= ["-l"; "-n";] |> set
+let grep fileNmaes flags pattern    =  
+    
+    let flagSet =  set flags 
+
+    let filterFlags = 
+        flagSet - _formatFlags 
+        |> Set.map (fun str -> match str.ToCharArray() with| [|hiphen;c2|] -> FilterFlags.from c2)
+        |> Set.toList
+        |> fun x -> List.fold  (|||)  (enum<FilterFlags> 0) x 
         
+    let formatFlags = 
+        flagSet - _filterFlags 
+        |> Set.map (fun str -> match str.ToCharArray() with| [|hiphen;c2|] -> FormatFlags.from c2)
+        |> Set.toList
+        |> fun x -> List.fold  (|||)  (enum<FormatFlags> 0) x 
+            
+
+    grep'' {GrepArgs.FileNames = fileNmaes; Pattern= pattern; FormatFlags = formatFlags; FilterFlags =  filterFlags  }
+    |> List.distinct
+    
+    
