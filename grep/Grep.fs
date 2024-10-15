@@ -19,6 +19,7 @@ module FilterFlags =
             | 'v' -> FilterFlags.V
             | 'i' -> FilterFlags.I
             | 'x' -> FilterFlags.X
+            |  _ -> failwith "not implemented"
 
 [<Flags>]
 type FormatFlags = 
@@ -30,6 +31,7 @@ module FormatFlags =
             match char with
             | 'l' -> FormatFlags.L
             | 'n' -> FormatFlags.N
+            |  _ -> failwith "not implemented"
             
 
 type GrepArgs = {
@@ -124,15 +126,24 @@ let grep fileNmaes flags pattern    =
     
     let flagSet =  set flags 
 
+
     let filterFlags = 
-        flagSet - _formatFlags 
-        |> Set.map (fun str -> match str.ToCharArray() with| [|hiphen;c2|] -> FilterFlags.from c2)
+        Set.intersect flagSet  _filterFlags
+        |> Set.map (fun str -> 
+            match str.ToCharArray() with
+            | [|hiphen;c2|] -> FilterFlags.from c2
+            |  _ -> failwith "not implemented"
+        )
         |> Set.toList
         |> fun x -> List.fold  (|||)  (enum<FilterFlags> 0) x 
         
     let formatFlags = 
-        flagSet - _filterFlags 
-        |> Set.map (fun str -> match str.ToCharArray() with| [|hiphen;c2|] -> FormatFlags.from c2)
+        Set.intersect flagSet  _formatFlags
+        |> Set.map (fun str -> 
+            match str.ToCharArray() with
+            | [|hiphen;c2|] -> FormatFlags.from c2
+            |  _ -> failwith "not implemented"
+        )
         |> Set.toList
         |> fun x -> List.fold  (|||)  (enum<FormatFlags> 0) x 
             
